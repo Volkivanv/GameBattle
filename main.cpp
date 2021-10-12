@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <ctime>
+#include <fstream>
 //#include <cstdlib>
 //#include <conio.h>
 
@@ -140,6 +141,38 @@ bool endGame(std::vector<player>& enemies, player& p){
     return true;
 }
 
+void saveGame(std::vector<player>& enemies, player& p){
+    std::ofstream save("Save.bin",std::ios::binary);
+    if(save){
+        save.write((char*) &enemies.size(),sizeof(enemies.size());
+        for(int i = 0; i < enemies.size(); i++){
+            int len = enemies[i].name.length();
+            save.write((char*) &len, sizeof(len));
+            save.write(enemies[i].name.c_str(), len);
+            save.write((char*) &enemies[i].x, sizeof(enemies[i].x));
+            save.write((char*) &enemies[i].y, sizeof(enemies[i].y));
+            save.write((char*) &enemies[i].life, sizeof(enemies[i].life));
+            save.write((char*) &enemies[i].armor, sizeof(enemies[i].armor));
+            save.write((char*) &enemies[i].drop, sizeof(enemies[i].drop));
+        }
+
+        int len = p.name.length();
+        save.write((char*) &len, sizeof(len));
+        save.write(p.name.c_str(), len);
+        save.write((char*) &p.x, sizeof(p.x));
+        save.write((char*) &p.y, sizeof(p.y));
+        save.write((char*) &p.life, sizeof(p.life));
+        save.write((char*) &p.armor, sizeof(p.armor));
+        save.write((char*) &p.drop, sizeof(p.drop));
+
+    } else {
+        std::cerr << "File is not opened!"<< std::endl;
+    }
+    save.close();
+
+
+}
+
 int main() {
     std::srand(std::time(nullptr));
     int numEnemies;
@@ -163,9 +196,10 @@ int main() {
     showScreen(enemy, gamer);
     char step;
 
-    std::cout <<"Your move Player! Input new step a,s,w,d or e for exit" << std::endl;
+    std::cout <<"Your move Player! Input new step a,s,w,d or e for exit, s for save, l for load" << std::endl;
     std::cin >> step;
 
+    //сделать чтение и сохранение
     while(step !='e'){
         movePlayer(gamer,step);
         playerHit(enemy,gamer);
@@ -179,7 +213,7 @@ int main() {
         //system("cls");
         if(endGame(enemy,gamer)) break;
 
-        std::cout <<"Your move Player! Input new step a,s,w,d or e for exit" << std::endl;
+        std::cout <<"Your move Player! Input new step a,s,w,d or e for exit, s for save, l for load" << std::endl;
         std::cin >> step;
 
     }
