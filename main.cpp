@@ -79,7 +79,7 @@ char mark(std::vector<player>& enemies, player& p, int r, int c){
 
     for(int i = 0; i < enemies.size(); i++){
         //if(enemies[i].x == c && enemies[i].y == r) return 'E';
-        if((enemies[i].x == c && enemies[i].y == r) && (enemies[i].life > 0)) return i+'0';
+        if((enemies[i].x == c && enemies[i].y == r) && (enemies[i].life > 0)) return 'E';
     }
     return '.';
 }
@@ -144,7 +144,8 @@ bool endGame(std::vector<player>& enemies, player& p){
 void saveGame(std::vector<player>& enemies, player& p){
     std::ofstream save("Save.bin",std::ios::binary);
     if(save){
-        save.write((char*) &enemies.size(),sizeof(enemies.size());
+        int enemyNumber = enemies.size();
+        save.write((char*) &enemyNumber,sizeof(enemyNumber));
         for(int i = 0; i < enemies.size(); i++){
             int len = enemies[i].name.length();
             save.write((char*) &len, sizeof(len));
@@ -173,33 +174,90 @@ void saveGame(std::vector<player>& enemies, player& p){
 
 }
 
+void loadGame(std::vector<player>& enemies, player& p){
+    std::ifstream save("Save.bin",std::ios::binary);
+    if(save){
+        int enemyNumber;
+        save.read((char*) &enemyNumber,sizeof(enemyNumber));
+        enemies.resize(enemyNumber);
+        for(int i = 0; i < enemies.size(); i++){
+            int len;
+
+            save.read((char*) &len, sizeof(len));
+            enemies[i].name.resize(len);
+            save.read((char*) enemies[i].name.c_str(), len);
+            save.read((char*) &enemies[i].x, sizeof(enemies[i].x));
+            save.read((char*) &enemies[i].y, sizeof(enemies[i].y));
+            save.read((char*) &enemies[i].life, sizeof(enemies[i].life));
+            save.read((char*) &enemies[i].armor, sizeof(enemies[i].armor));
+            save.read((char*) &enemies[i].drop, sizeof(enemies[i].drop));
+        }
+
+        int len;
+
+        save.read((char*) &len, sizeof(len));
+        p.name.resize(len);
+        save.read((char*) p.name.c_str(), len);
+        save.read((char*) &p.x, sizeof(p.x));
+        save.read((char*) &p.y, sizeof(p.y));
+        save.read((char*) &p.life, sizeof(p.life));
+        save.read((char*) &p.armor, sizeof(p.armor));
+        save.read((char*) &p.drop, sizeof(p.drop));
+
+    } else {
+        std::cerr << "File is not found!"<< std::endl;
+    }
+    save.close();
+
+
+}
+
 int main() {
     std::srand(std::time(nullptr));
-    int numEnemies;
-    std::cout << "Please input count of enemies!" << std::endl;
-    std::cin >> numEnemies;
+    int numEnemies = 5;
     std::vector<player> enemy(numEnemies);
     player gamer;
-
-
-    floodVec(enemy);
-    initPlayer(gamer, "Cheburashka");
-    std::cout << "Please, input name of your Player!" <<std::endl;
-    std::cin >> gamer.name;
-    std::cout << "Please, input life level your Player between 50 and 150!" << std::endl;
-    std::cin >> gamer.life;
-    std::cout << "Please, input armor level your Player between 0 and 50!" << std::endl;
-    std::cin >> gamer.armor;
-    std::cout << "Please, input drop level your Player between 15 and 30!" << std::endl;
-    std::cin >> gamer.drop;
-    showStatus(enemy,gamer);
-    showScreen(enemy, gamer);
     char step;
 
-    std::cout <<"Your move Player! Input new step a,s,w,d or e for exit, s for save, l for load" << std::endl;
+    std::cout << "If you want load your save file please input 'l', else any other letter." << std::endl;
     std::cin >> step;
+    if(step == 'l'){
+        loadGame(enemy,gamer);
+        showStatus(enemy,gamer);
+        showScreen(enemy, gamer);
+        std::cout <<"File is loaded. Your move Player! Input new step a,s,w,d or e for exit" << std::endl;
+        std::cin >> step;
+    } else {
+        std::cout << "New game! Please input count of enemies!" << std::endl;
+        std::cin >> numEnemies;
+        enemy.resize(numEnemies);
+        floodVec(enemy);
+        initPlayer(gamer, "Cheburashka");
+        std::cout << "Please, input name of your Player!" << std::endl;
+        std::cin >> gamer.name;
+        std::cout << "Please, input life level your Player between 50 and 150!" << std::endl;
+        std::cin >> gamer.life;
+        std::cout << "Please, input armor level your Player between 0 and 50!" << std::endl;
+        std::cin >> gamer.armor;
+        std::cout << "Please, input drop level your Player between 15 and 30!" << std::endl;
+        std::cin >> gamer.drop;
+        showStatus(enemy, gamer);
+        showScreen(enemy, gamer);
+        std::cout <<"Person is created! Your move Player! Input new step a,s,w,d or e for exit, v for save, l for load" << std::endl;
+        std::cin >> step;
+        if(step == 'v'){
+            saveGame(enemy,gamer);
+            std::cout <<"File is saved! Your move Player! Input new step a,s,w,d or e for exit" << std::endl;
+            std::cin >> step;
+        }if(step == 'l'){
+            loadGame(enemy,gamer);
+            showStatus(enemy,gamer);
+            showScreen(enemy, gamer);
+            std::cout <<"File is loaded. Your move Player! Input new step a,s,w,d or e for exit" << std::endl;
+            std::cin >> step;
+        }
+    }
 
-    //сделать чтение и сохранение
     while(step !='e'){
         movePlayer(gamer,step);
         playerHit(enemy,gamer);
@@ -213,8 +271,20 @@ int main() {
         //system("cls");
         if(endGame(enemy,gamer)) break;
 
-        std::cout <<"Your move Player! Input new step a,s,w,d or e for exit, s for save, l for load" << std::endl;
+
+        std::cout <<"Your move Player! Input new step a,s,w,d or e for exit, v for save, l for load" << std::endl;
         std::cin >> step;
+        if(step == 'v'){
+            saveGame(enemy,gamer);
+            std::cout <<"File is saved! Your move Player! Input new step a,s,w,d or e for exit" << std::endl;
+            std::cin >> step;
+        }if(step == 'l'){
+            loadGame(enemy,gamer);
+            showStatus(enemy,gamer);
+            showScreen(enemy, gamer);
+            std::cout <<"File is loaded. Your move Player! Input new step a,s,w,d or e for exit" << std::endl;
+            std::cin >> step;
+        }
 
     }
 
